@@ -1,0 +1,1131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OTA Support Ticket Generator</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .webhook-info {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 15px;
+            font-size: 0.9rem;
+        }
+
+        .webhook-info code {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Monaco', 'Menlo', monospace;
+        }
+
+        .main-content {
+            padding: 30px;
+        }
+
+        .upload-section {
+            background: #f8f9fa;
+            border: 3px dashed #dee2e6;
+            border-radius: 15px;
+            padding: 40px;
+            text-align: center;
+            margin-bottom: 30px;
+            transition: all 0.3s ease;
+        }
+
+        .upload-section:hover {
+            border-color: #3498db;
+            background: #e3f2fd;
+        }
+
+        .upload-section.dragover {
+            border-color: #2ecc71;
+            background: #d5f4e6;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .upload-btn {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+
+        .upload-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(52, 152, 219, 0.3);
+        }
+
+        .controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .control-group {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+        }
+
+        .control-group label {
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .control-group select, .control-group input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e1e8ed;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+
+        .control-group select:focus, .control-group input:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #27ae60, #2ecc71);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #8e44ad, #9b59b6);
+            color: white;
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, #f39c12, #e67e22);
+            color: white;
+        }
+
+        .btn-zapier {
+            background: linear-gradient(135deg, #ff4a00, #ff6b35);
+            color: white;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .results-section {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .results-header {
+            background: linear-gradient(135deg, #34495e, #2c3e50);
+            color: white;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .results-content {
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        .ticket-item {
+            border-bottom: 1px solid #ecf0f1;
+            padding: 20px;
+            transition: background-color 0.3s ease;
+        }
+
+        .ticket-item:hover {
+            background: #f8f9fa;
+        }
+
+        .ticket-header {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .ticket-meta {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .meta-tag {
+            background: #e3f2fd;
+            color: #1976d2;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .ticket-content {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            border-left: 4px solid #3498db;
+            white-space: pre-wrap;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #3498db;
+        }
+
+        .stat-label {
+            color: #7f8c8d;
+            font-weight: 600;
+            margin-top: 5px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 4px;
+            background: #ecf0f1;
+            border-radius: 2px;
+            overflow: hidden;
+            margin: 20px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #3498db, #2ecc71);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 20px;
+            border-radius: 10px;
+            z-index: 10000;
+            font-weight: 600;
+            animation: slideIn 0.3s ease-out;
+            max-width: 400px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .notification.success {
+            background: linear-gradient(135deg, #2ecc71, #27ae60);
+            color: white;
+        }
+
+        .notification.error {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            color: white;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        .zapier-guide {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 15px;
+            font-size: 0.9rem;
+        }
+
+        .zapier-guide a {
+            color: #3498db;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .zapier-guide a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎫 OTA Support Ticket Generator</h1>
+            <p>Transform OTA error data into structured support tickets and send directly to Intercom via Zapier</p>
+            <div class="webhook-info">
+                <strong>📋 How to use this tool:</strong><br>
+                1. Download the CSV from Metabase queries<br>
+                2. Upload it here using the file selector below<br>
+                3. Click "Generate AI Tickets" to process the data<br>
+                4. Click "Send to Zapier → Intercom" to create tickets automatically
+            </div>
+            <div class="zapier-guide">
+                <strong>🔗 Zapier Webhook URL:</strong><br>
+                <code>https://hooks.zapier.com/hooks/catch/17640320/uugdg19/</code>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="upload-section" id="uploadSection">
+                <h3>📁 Upload Your CSV File</h3>
+                <p>Drag and drop your OTA error CSV file here, or click to browse</p>
+                <input type="file" id="fileInput" class="file-input" accept=".csv" />
+                <button class="upload-btn" onclick="document.getElementById('fileInput').click()">
+                    Choose File
+                </button>
+            </div>
+
+            <div id="controlsSection" class="hidden">
+                <div class="stats" id="statsSection"></div>
+                
+                <div class="controls">
+                    <div class="control-group">
+                        <label for="otaFilter">Filter by OTA:</label>
+                        <select id="otaFilter">
+                            <option value="">All OTAs</option>
+                        </select>
+                    </div>
+                    <div class="control-group">
+                        <label for="errorFilter">Filter by Error Code:</label>
+                        <select id="errorFilter">
+                            <option value="">All Error Codes</option>
+                        </select>
+                    </div>
+                    <div class="control-group">
+                        <label for="limitRecords">Limit Records:</label>
+                        <input type="number" id="limitRecords" value="50" min="1" max="1000">
+                    </div>
+                    <div class="control-group">
+                        <label for="zapierWebhookUrl">Zapier Webhook URL:</label>
+                        <input type="url" id="zapierWebhookUrl" value="https://hooks.zapier.com/hooks/catch/17640320/uugdg19/" />
+                    </div>
+                </div>
+
+                <div class="action-buttons">
+                    <button class="btn btn-primary" onclick="processTickets()">
+                        🤖 Generate AI Tickets
+                    </button>
+                    <button class="btn btn-secondary" onclick="exportToCSV()">
+                        📊 Export for Intercom
+                    </button>
+                    <button class="btn btn-zapier" onclick="sendToZapier()" id="zapierBtn">
+                        ⚡ Send to Zapier → Intercom
+                    </button>
+                    <button class="btn btn-warning" onclick="exportRawCSV()">
+                        📁 Export Raw Data
+                    </button>
+                    <button class="btn btn-warning" onclick="clearResults()">
+                        🗑️ Clear Results
+                    </button>
+                </div>
+
+                <div class="progress-bar hidden" id="progressBar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+            </div>
+
+            <div id="resultsSection" class="results-section hidden">
+                <div class="results-header">
+                    <h3>Generated Support Tickets</h3>
+                    <span id="ticketCount">0 tickets</span>
+                </div>
+                <div class="results-content" id="resultsContent"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let csvData = [];
+        let processedTickets = [];
+
+        // File upload handling
+        const fileInput = document.getElementById('fileInput');
+        const uploadSection = document.getElementById('uploadSection');
+
+        fileInput.addEventListener('change', handleFileSelect);
+        uploadSection.addEventListener('dragover', handleDragOver);
+        uploadSection.addEventListener('drop', handleDrop);
+        uploadSection.addEventListener('dragenter', () => uploadSection.classList.add('dragover'));
+        uploadSection.addEventListener('dragleave', () => uploadSection.classList.remove('dragover'));
+
+        function handleDragOver(e) {
+            e.preventDefault();
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            uploadSection.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                processFile(files[0]);
+            }
+        }
+
+        function handleFileSelect(e) {
+            const file = e.target.files[0];
+            if (file) {
+                processFile(file);
+            }
+        }
+
+        function processFile(file) {
+            if (!file.name.toLowerCase().endsWith('.csv')) {
+                alert('Please select a CSV file');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const csv = e.target.result;
+                Papa.parse(csv, {
+                    header: true,
+                    dynamicTyping: true,
+                    skipEmptyLines: true,
+                    complete: function(results) {
+                        csvData = results.data;
+                        setupInterface();
+                        showStats();
+                    },
+                    error: function(error) {
+                        alert('Error parsing CSV: ' + error.message);
+                    }
+                });
+            };
+            reader.readAsText(file);
+        }
+
+        function setupInterface() {
+            document.getElementById('controlsSection').classList.remove('hidden');
+            
+            // Populate OTA filter
+            const otaFilter = document.getElementById('otaFilter');
+            const uniqueOTAs = [...new Set(csvData.map(row => row.message).filter(Boolean))];
+            otaFilter.innerHTML = '<option value="">All OTAs</option>';
+            uniqueOTAs.forEach(ota => {
+                const option = document.createElement('option');
+                option.value = ota;
+                option.textContent = ota.charAt(0).toUpperCase() + ota.slice(1);
+                otaFilter.appendChild(option);
+            });
+
+            // Populate error filter
+            const errorFilter = document.getElementById('errorFilter');
+            const uniqueErrors = [...new Set(csvData.map(row => {
+                if (row.error_code) {
+                    try {
+                        const errorObj = JSON.parse(row.error_code);
+                        return Object.keys(errorObj)[0];
+                    } catch (e) {
+                        return null;
+                    }
+                }
+                return null;
+            }).filter(Boolean))];
+            
+            errorFilter.innerHTML = '<option value="">All Error Codes</option>';
+            uniqueErrors.forEach(error => {
+                const option = document.createElement('option');
+                option.value = error;
+                option.textContent = error;
+                errorFilter.appendChild(option);
+            });
+        }
+
+        function showStats() {
+            const statsSection = document.getElementById('statsSection');
+            const totalRecords = csvData.length;
+            const uniqueOTAs = new Set(csvData.map(row => row.message).filter(Boolean)).size;
+            const uniqueErrors = new Set(csvData.map(row => {
+                if (row.error_code) {
+                    try {
+                        const errorObj = JSON.parse(row.error_code);
+                        return Object.keys(errorObj)[0];
+                    } catch (e) {
+                        return null;
+                    }
+                }
+                return null;
+            }).filter(Boolean)).size;
+
+            statsSection.innerHTML = `
+                <div class="stat-card">
+                    <div class="stat-number">${totalRecords}</div>
+                    <div class="stat-label">Total Records</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">${uniqueOTAs}</div>
+                    <div class="stat-label">Unique OTAs</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">${uniqueErrors}</div>
+                    <div class="stat-label">Error Types</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">${processedTickets.length}</div>
+                    <div class="stat-label">Generated Tickets</div>
+                </div>
+            `;
+        }
+
+        function getFilteredData() {
+            const otaFilter = document.getElementById('otaFilter').value;
+            const errorFilter = document.getElementById('errorFilter').value;
+            const limit = parseInt(document.getElementById('limitRecords').value) || 50;
+
+            let filtered = csvData.filter(row => {
+                if (otaFilter && row.message !== otaFilter) return false;
+                if (errorFilter) {
+                    try {
+                        const errorObj = JSON.parse(row.error_code || '{}');
+                        const firstErrorCode = Object.keys(errorObj)[0];
+                        if (firstErrorCode !== errorFilter) return false;
+                    } catch (e) {
+                        return false;
+                    }
+                }
+                return true;
+            });
+
+            return filtered.slice(0, limit);
+        }
+
+        function parseErrorCode(errorCodeString) {
+            try {
+                const errorObj = JSON.parse(errorCodeString);
+                const firstKey = Object.keys(errorObj)[0];
+                return {
+                    code: firstKey,
+                    message: errorObj[firstKey]
+                };
+            } catch (e) {
+                return {
+                    code: 'Unknown',
+                    message: errorCodeString || 'No error message available'
+                };
+            }
+        }
+
+        function generateTicketNote(row) {
+            const error = parseErrorCode(row.error_code);
+            const ota = (row.message || 'Unknown').charAt(0).toUpperCase() + (row.message || 'Unknown').slice(1);
+            
+            // Determine error type based on error code and message
+            let errorType = 'Unknown Error';
+            let troubleshootingSteps = '';
+            let macro = '';
+            let canResolveInternally = false;
+
+            // Analyze error patterns
+            const errorMessage = error.message.toLowerCase();
+            
+            if (errorMessage.includes('permission') || errorMessage.includes('access')) {
+                errorType = 'Permission/Access Error';
+                troubleshootingSteps = '1. Verify API credentials and permissions\n2. Check if the hotel/listing is properly connected\n3. Validate account access rights\n4. Contact OTA support if credentials are valid';
+                canResolveInternally = false;
+                macro = 'Action Needed by Client Macro: Dear customer, we detected a permission error with your OTA connection. Please verify your account credentials and ensure proper access rights are granted. You may need to reconnect your account or contact the OTA directly.';
+            } else if (errorMessage.includes('long-term rental') || errorMessage.includes('365 or more') || errorMessage.includes('31 or more')) {
+                errorType = 'Long-Term Rentals Restriction';
+                troubleshootingSteps = '1. Review listing settings for minimum stay requirements\n2. Check OTA account restrictions\n3. Advise client to adjust minimum stay or complete registration';
+                canResolveInternally = false;
+                macro = 'Action Needed by Client Macro: Dear customer, your listing is restricted to long-term rentals only. Please adjust your minimum stay settings or complete the required registration process with the OTA to allow shorter stays.';
+            } else if (errorMessage.includes('terms of service') || errorMessage.includes('declined')) {
+                errorType = 'Terms of Service Issue';
+                troubleshootingSteps = '1. Inform client about ToS requirement\n2. Provide guidance on accepting terms\n3. Offer option to disconnect if not accepted';
+                canResolveInternally = false;
+                macro = 'Action Needed by Client Macro: Dear customer, your connection shows an error because the Terms of Service were declined. Please log into your OTA account and accept the latest Terms of Service to continue using the service, or let us know if you\'d like to disconnect this integration.';
+            } else if (errorMessage.includes('cleaning fee') || errorMessage.includes('minimum nightly price')) {
+                errorType = 'Pricing Configuration Error';
+                troubleshootingSteps = '1. Review pricing structure\n2. Calculate appropriate nightly rate based on cleaning fee\n3. Advise client on pricing adjustments';
+                canResolveInternally = false;
+                macro = 'Action Needed by Client Macro: Dear customer, there\'s an issue with your pricing configuration. Based on your cleaning fee amount, you need to adjust your minimum nightly price. Please review and update your pricing settings.';
+            } else if (errorMessage.includes('property type') || errorMessage.includes('multiple inventories')) {
+                errorType = 'Property Configuration Error';
+                troubleshootingSteps = '1. Review property type settings\n2. Check inventory configuration\n3. Advise on supported property types';
+                canResolveInternally = false;
+                macro = 'Action Needed by Client Macro: Dear customer, your property type configuration doesn\'t support the current inventory setup. Please review your property settings and adjust them according to the OTA requirements.';
+            } else {
+                errorType = 'General OTA Error';
+                troubleshootingSteps = '1. Review error details\n2. Check OTA documentation\n3. Contact technical support if needed\n4. Provide client with specific guidance';
+                canResolveInternally = false;
+                macro = 'Action Needed by Client Macro: Dear customer, we\'ve identified an issue with your OTA connection. Our technical team is investigating, and we\'ll provide you with specific steps to resolve this issue shortly.';
+            }
+
+            return `📋 Error Details:
+OTA: ${ota}
+Error Code: ${error.code}
+Error Type: ${errorType}
+Error Message: ${error.message}
+
+🔍 Reason for Error:
+${getErrorReason(errorType, error.message)}
+
+🛠️ Troubleshooting Steps for the Agent:
+${troubleshootingSteps}
+
+✅ Resolution Status: ${canResolveInternally ? 'Can be resolved internally' : 'Requires client action'}
+
+💬 Appropriate Macro:
+${macro}
+
+📊 Additional Information:
+- Hotel ID: ${row['payload.hotel_id'] || 'N/A'}
+- Account Owner ID: ${row['payload.account_owner_id'] || 'N/A'}
+- OTA Hotel ID: ${row['payload.ota_hotel_id'] || 'N/A'}
+- Batcave Link: ${row.batcave_link || 'N/A'}`;
+        }
+
+        function getErrorReason(errorType, errorMessage) {
+            switch (errorType) {
+                case 'Permission/Access Error':
+                    return 'The API credentials may be invalid, expired, or the account may not have sufficient permissions to access the requested resource.';
+                case 'Long-Term Rentals Restriction':
+                    return 'The OTA account or listing is configured to only accept long-term bookings, but shorter stay requests are being made.';
+                case 'Terms of Service Issue':
+                    return 'The host has not accepted the latest Terms of Service required by the OTA platform.';
+                case 'Pricing Configuration Error':
+                    return 'The cleaning fee and nightly rate combination violates the OTA\'s pricing policies or minimum rate requirements.';
+                case 'Property Configuration Error':
+                    return 'The property type or inventory settings are incompatible with the OTA\'s requirements for this listing type.';
+                default:
+                    return 'The error requires further investigation to determine the specific cause and resolution steps.';
+            }
+        }
+
+        function processTickets() {
+            const filteredData = getFilteredData();
+            if (filteredData.length === 0) {
+                alert('No data to process. Please check your filters.');
+                return;
+            }
+
+            const progressBar = document.getElementById('progressBar');
+            const progressFill = document.getElementById('progressFill');
+            
+            progressBar.classList.remove('hidden');
+            processedTickets = [];
+
+            let processed = 0;
+            const total = filteredData.length;
+
+            filteredData.forEach((row, index) => {
+                setTimeout(() => {
+                    const ticketNote = generateTicketNote(row);
+                    processedTickets.push({
+                        ...row,
+                        generated_ticket_note: ticketNote,
+                        processed_at: new Date().toISOString()
+                    });
+
+                    processed++;
+                    const progress = (processed / total) * 100;
+                    progressFill.style.width = progress + '%';
+
+                    if (processed === total) {
+                        setTimeout(() => {
+                            progressBar.classList.add('hidden');
+                            displayResults();
+                            showStats();
+                        }, 500);
+                    }
+                }, index * 50); // Small delay for visual effect
+            });
+        }
+
+        function displayResults() {
+            const resultsSection = document.getElementById('resultsSection');
+            const resultsContent = document.getElementById('resultsContent');
+            const ticketCount = document.getElementById('ticketCount');
+
+            resultsSection.classList.remove('hidden');
+            ticketCount.textContent = `${processedTickets.length} tickets`;
+
+            resultsContent.innerHTML = processedTickets.map((ticket, index) => {
+                const error = parseErrorCode(ticket.error_code);
+                const ota = (ticket.message || 'Unknown').charAt(0).toUpperCase() + (ticket.message || 'Unknown').slice(1);
+                
+                return `
+                    <div class="ticket-item">
+                        <div class="ticket-header">
+                            <div class="ticket-meta">
+                                <span class="meta-tag">🏨 Hotel ID: ${ticket['payload.hotel_id'] || 'N/A'}</span>
+                                <span class="meta-tag">🌐 ${ota}</span>
+                                <span class="meta-tag">⚠️ Error: ${error.code}</span>
+                            </div>
+                        </div>
+                        <div class="ticket-content">${ticket.generated_ticket_note}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function exportToCSV() {
+            if (processedTickets.length === 0) {
+                alert('No processed tickets to export. Please generate tickets first.');
+                return;
+            }
+
+            // Transform data to match Intercom ticket structure
+            const intercomReadyData = processedTickets.map(ticket => {
+                const error = parseErrorCode(ticket.error_code);
+                const ota = (ticket.message || 'Unknown').charAt(0).toUpperCase() + (ticket.message || 'Unknown').slice(1);
+                
+                // Create title from error info
+                const ticketTitle = `${ota} Connection Error - Code ${error.code}`;
+                
+                // Get error type for category
+                const errorType = getErrorTypeFromMessage(error.message);
+                
+                return {
+                    // Intercom ticket fields
+                    '_default_title_': ticketTitle,
+                    '_default_description_': ticket.generated_ticket_note,
+                    'Hotel ID': ticket['payload.hotel_id'] || '',
+                    'Account Owner ID': ticket['payload.account_owner_id'] || '',
+                    'OTA channel': ota,
+                    'Batcave Link': ticket.batcave_link || '',
+                    'Error category': errorType,
+                    
+                    // Additional fields for Zapier processing
+                    'error_code': error.code,
+                    'error_message': error.message,
+                    'ota_hotel_id': ticket['payload.ota_hotel_id'] || '',
+                    'linked_ota_channel_id': ticket['payload.linked_ota_channel_id'] || '',
+                    'requires_client_action': determineClientAction(error.message),
+                    'ticket_type_id': '11', // Your OTA Connection Error ticket type ID
+                    'workspace_id': 'gqbyy2bu',
+                    'initial_state': 'submitted',
+                    'category': 'Back-office',
+                    'is_internal': 'true',
+                    'processed_at': ticket.processed_at || new Date().toISOString()
+                };
+            });
+
+            const csvContent = Papa.unparse(intercomReadyData);
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            
+            if (link.download !== undefined) {
+                const url = URL.createObjectURL(blob);
+                link.setAttribute('href', url);
+                link.setAttribute('download', `intercom_ready_tickets_${new Date().toISOString().split('T')[0]}.csv`);
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+        }
+
+        function getErrorTypeFromMessage(errorMessage) {
+            const message = errorMessage.toLowerCase();
+            
+            if (message.includes('permission') || message.includes('access')) {
+                return 'Permission/Access Error';
+            } else if (message.includes('long-term rental') || message.includes('365 or more') || message.includes('31 or more')) {
+                return 'Long-Term Rentals Restriction';
+            } else if (message.includes('terms of service') || message.includes('declined')) {
+                return 'Terms of Service Issue';
+            } else if (message.includes('cleaning fee') || message.includes('minimum nightly price')) {
+                return 'Pricing Configuration Error';
+            } else if (message.includes('property type') || message.includes('multiple inventories')) {
+                return 'Property Configuration Error';
+            } else {
+                return 'General OTA Error';
+            }
+        }
+
+        function determineClientAction(errorMessage) {
+            const message = errorMessage.toLowerCase();
+            
+            // Most OTA errors require client action
+            if (message.includes('permission') || message.includes('access')) {
+                return 'true'; // Usually requires credential check/reconnection
+            } else if (message.includes('long-term rental')) {
+                return 'true'; // Requires setting adjustment
+            } else if (message.includes('terms of service')) {
+                return 'true'; // Requires ToS acceptance
+            } else if (message.includes('cleaning fee') || message.includes('pricing')) {
+                return 'true'; // Requires pricing adjustment
+            } else if (message.includes('property type')) {
+                return 'true'; // Requires property setting change
+            } else {
+                return 'false'; // Can potentially be resolved internally
+            }
+        }
+
+        function clearResults() {
+            processedTickets = [];
+            document.getElementById('resultsSection').classList.add('hidden');
+            showStats();
+        }
+
+        function exportRawCSV() {
+            if (processedTickets.length === 0) {
+                alert('No processed tickets to export. Please generate tickets first.');
+                return;
+            }
+
+            const csvContent = Papa.unparse(processedTickets);
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            
+            if (link.download !== undefined) {
+                const url = URL.createObjectURL(blob);
+                link.setAttribute('href', url);
+                link.setAttribute('download', `raw_ota_tickets_${new Date().toISOString().split('T')[0]}.csv`);
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+        }
+
+        async function sendToZapier() {
+            console.log('🔧 sendToZapier function called');
+            
+            if (processedTickets.length === 0) {
+                alert('No processed tickets to send. Please generate tickets first.');
+                return;
+            }
+            console.log('✅ Has processed tickets:', processedTickets.length);
+
+            const zapierWebhookUrl = document.getElementById('zapierWebhookUrl').value.trim();
+            if (!zapierWebhookUrl) {
+                alert('Please enter your Zapier webhook URL first.');
+                return;
+            }
+            console.log('✅ Webhook URL:', zapierWebhookUrl);
+
+            // More flexible URL validation
+            if (!zapierWebhookUrl.includes('zapier.com') && !zapierWebhookUrl.startsWith('http')) {
+                alert('Please enter a valid webhook URL');
+                return;
+            }
+
+            // Show loading state
+            const sendButton = document.getElementById('zapierBtn');
+            const originalText = sendButton.innerHTML;
+            sendButton.innerHTML = '⏳ Sending to Zapier...';
+            sendButton.disabled = true;
+            console.log('🔄 Button state changed to loading');
+
+            try {
+                // Transform data for Zapier/Intercom
+                const zapierReadyData = processedTickets.map(ticket => {
+                    const error = parseErrorCode(ticket.error_code);
+                    const ota = (ticket.message || 'Unknown').charAt(0).toUpperCase() + (ticket.message || 'Unknown').slice(1);
+                    
+                    // Create title from error info
+                    const ticketTitle = `${ota} Connection Error - Code ${error.code}`;
+                    
+                    // Get error type for category
+                    const errorType = getErrorTypeFromMessage(error.message);
+                    
+                    return {
+                        // Exact field names that Zapier will map to Intercom
+                        '_default_title_': ticketTitle,
+                        '_default_description_': ticket.generated_ticket_note,
+                        'Hotel_ID': ticket['payload.hotel_id'] || '',
+                        'Account_Owner_ID': ticket['payload.account_owner_id'] || '',
+                        'OTA_channel': ota,
+                        'Batcave_Link': ticket.batcave_link || '',
+                        'Error_category': errorType,
+                        'error_code': error.code,
+                        'error_message': error.message,
+                        'ota_hotel_id': ticket['payload.ota_hotel_id'] || '',
+                        'linked_ota_channel_id': ticket['payload.linked_ota_channel_id'] || '',
+                        'requires_client_action': determineClientAction(error.message),
+                        'ticket_type_id': '11',
+                        'workspace_id': 'gqbyy2bu',
+                        'initial_state': 'submitted',
+                        'category': 'Back-office',
+                        'is_internal': true,
+                        'processed_at': ticket.processed_at || new Date().toISOString()
+                    };
+                });
+
+                // Send JSON to Zapier webhook
+                const jsonPayload = {
+                    tickets: zapierReadyData,
+                    count: zapierReadyData.length,
+                    timestamp: new Date().toISOString(),
+                    source: 'OTA_Ticket_Generator'
+                };
+
+                console.log('🚀 Sending JSON to Zapier:');
+                console.log('- Webhook URL:', zapierWebhookUrl);
+                console.log('- Ticket count:', jsonPayload.count);
+                console.log('- Full payload:', jsonPayload);
+
+                const response = await fetch(zapierWebhookUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    mode: 'no-cors',
+                    body: JSON.stringify(jsonPayload)
+                });
+
+                console.log('📡 Request sent in no-cors mode');
+                console.log('- Note: Response will be opaque due to no-cors mode');
+
+                // In no-cors mode, we can't read the response
+                // But if no error is thrown, the request was sent successfully
+                console.log('✅ Request completed without errors');
+                showNotification('success', `Successfully sent ${zapierReadyData.length} tickets to Zapier!`, 'Check your Zapier dashboard to confirm receipt.');
+
+            } catch (error) {
+                console.error('❌ Zapier webhook error:', error);
+                console.error('Error details:', {
+                    name: error.name,
+                    message: error.message,
+                    stack: error.stack
+                });
+                showNotification('error', 'Connection Error', `Failed to send to Zapier: ${error.message}. Check console for details.`);
+            } finally {
+                // Reset button
+                sendButton.innerHTML = originalText;
+                sendButton.disabled = false;
+                console.log('🔄 Button state reset');
+            }
+        }
+
+        function showNotification(type, title, message) {
+            // Remove any existing notifications
+            const existingNotifications = document.querySelectorAll('.notification');
+            existingNotifications.forEach(n => n.remove());
+
+            // Create new notification
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            
+            const emoji = type === 'success' ? '🎉' : '❌';
+            
+            notification.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <div style="font-size: 24px;">${emoji}</div>
+                    <div>
+                        <div style="font-size: 16px; margin-bottom: 5px;">${title}</div>
+                        <div style="font-size: 14px; opacity: 0.9;">${message}</div>
+                    </div>
+                </div>
+            `;
+
+            document.body.appendChild(notification);
+
+            // Remove after 6 seconds
+            setTimeout(() => {
+                notification.remove();
+            }, 6000);
+        }
+
+        function showZapierInstructions() {
+            const instructionWindow = window.open('', '_blank', 'width=800,height=600,scrollbars=yes');
+            instructionWindow.document.write(`
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>Zapier Setup Instructions</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; line-height: 1.6; }
+                        h1, h2 { color: #2c3e50; }
+                        .step { background: #f8f9fa; padding: 15px; margin: 10px 0; border-radius: 8px; border-left: 4px solid #3498db; }
+                        code { background: #e9ecef; padding: 2px 6px; border-radius: 4px; font-family: monospace; }
+                        .warning { background: #fff3cd; border-left-color: #ffc107; }
+                        .success { background: #d4edda; border-left-color: #28a745; }
+                    </style>
+                </head>
+                <body>
+                    <h1>🚀 Zapier to Intercom Setup Guide</h1>
+                    
+                    <div class="step">
+                        <h2>Step 1: Create a New Zap</h2>
+                        <p>1. Go to <strong>Zapier.com</strong> and log in</p>
+                        <p>2. Click <strong>"Create Zap"</strong></p>
+                        <p>3. Choose <strong>"Webhooks by Zapier"</strong> as your trigger</p>
+                        <p>4. Select <strong>"Catch Hook"</strong> as the event</p>
+                    </div>
+
+                    <div class="step">
+                        <h2>Step 2: Get Your Webhook URL</h2>
+                        <p>1. Copy the webhook URL provided by Zapier</p>
+                        <p>2. It will look like: <code>https://hooks.zapier.com/hooks/catch/[numbers]/[letters]</code></p>
+                        <p>3. Paste this URL into the "Zapier Webhook URL" field in the ticket generator</p>
+                    </div>
+
+                    <div class="step">
+                        <h2>Step 3: Test Your Webhook</h2>
+                        <p>1. Generate some tickets in the tool</p>
+                        <p>2. Click <strong>"Send to Zapier → Intercom"</strong></p>
+                        <p>3. Go back to Zapier and click <strong>"Test trigger"</strong></p>
+                        <p>4. You should see your ticket data appear</p>
+                    </div>
+
+                    <div class="step">
+                        <h2>Step 4: Add Looping (IMPORTANT!)</h2>
+                        <p>1. Add a <strong>"Looping by Zapier"</strong> step</p>
+                        <p>2. Set the loop source to: <code>tickets</code></p>
+                        <p>3. This will process each ticket individually</p>
+                    </div>
+
+                    <div class="step">
+                        <h2>Step 5: Add Intercom Action</h2>
+                        <p>1. Add <strong>"Intercom"</strong> as an action</p>
+                        <p>2. Choose <strong>"Create Ticket"</strong></p>
+                        <p>3. Connect your Intercom account</p>
+                        <p>4. Map the fields:</p>
+                        <ul>
+                            <li><strong>Title:</strong> <code>tickets _default_title_</code></li>
+                            <li><strong>Description:</strong> <code>tickets _default_description_</code></li>
+                            <li><strong>Hotel ID:</strong> <code>tickets Hotel_ID</code></li>
+                            <li><strong>OTA Channel:</strong> <code>tickets OTA_channel</code></li>
+                            <li><strong>Error Category:</strong> <code>tickets Error_category</code></li>
+                        </ul>
+                    </div>
+
+                    <div class="step success">
+                        <h2>Step 6: Test & Activate</h2>
+                        <p>1. Test the entire workflow</p>
+                        <p>2. Check that tickets are created in Intercom</p>
+                        <p>3. Turn on your Zap</p>
+                        <p>4. You're ready to go! 🎉</p>
+                    </div>
+
+                    <div class="step warning">
+                        <h2>⚠️ Important Notes</h2>
+                        <p>• Make sure your Intercom custom attributes match the field names</p>
+                        <p>• Test with a small number of tickets first</p>
+                        <p>• Monitor for rate limiting with large batches</p>
+                        <p>• Each CSV row will create a separate ticket in Intercom</p>
+                    </div>
+                </body>
+                </html>
+            `);
+        }
+    </script>
+</body>
+</html>

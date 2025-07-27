@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Amenitiz Agent Call Platform</title>
+    <meta name="description" content="Amenitiz Agent Call Platform - Initiate calls to direct lines with confidence">
+    <meta name="author" content="Amenitiz">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📞</text></svg>">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: #ffffff;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            color: #333333;
+        }
+
+        .platform-container {
+            background: #ffffff;
+            border-radius: 32px;
+            padding: 48px 40px;
+            max-width: 420px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(37, 99, 235, 0.08), 0 8px 25px rgba(0, 0, 0, 0.04);
+            position: relative;
+            animation: slideUp 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid rgba(37, 99, 235, 0.08);
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(40px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .header {
+            text-align: left;
+            margin-bottom: 48px;
+            animation: fadeInDown 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.2s both;
+        }
+
+        .amenitiz-logo {
+            font-size: 2.8rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 16px;
+            letter-spacing: -1.5px;
+            line-height: 1;
+            transition: all 0.3s ease;
+            cursor: default;
+            display: inline-block;
+        }
+
+        .amenitiz-logo:hover {
+            transform: scale(1.01);
+        }
+
+        .header h1 {
+            color: #1f2937;
+            font-size: 1.8rem;
+            font-weight: 400;
+            margin-bottom: 6px;
+            font-style: italic;
+            letter-spacing: -0.3px;
+            line-height: 1.3;
+        }
+
+        .header p {
+            color: #64748b;
+            font-size: 0.95rem;
+            font-weight: 400;
+            line-height: 1.5;
+            margin-top: 8px;
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .form-group {
+            margin-bottom: 32px;
+            animation: fadeInUp 0.6s cubic-bezier(0.4, 0, 0.2, 1) both;
+        }
+
+        .form-group:nth-child(1) { animation-delay: 0.4s; }
+        .form-group:nth-child(2) { animation-delay: 0.6s; }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        label {
+            display: block;
+            color: #374151;
+            font-weight: 500;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        input[type="text"], select {
+            width: 100%;
+            padding: 16px 0;
+            border: none;
+            border-bottom: 1px solid #e5e7eb;
+            font-size: 1.1rem;
+            background-color: transparent;
+            color: #1f2937;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            font-weight: 400;
+        }
+
+        input[type="text"]::placeholder {
+            color: #9ca3af;
+            font-weight: 300;
+        }
+
+        input[type="text"]:focus, select:focus {
+            outline: none;
+            border-bottom-color: #2563eb;
+            transform: translateY(-1px);
+            color: #1f2937;
+        }
+
+        input[type="text"]:hover:not(:focus), select:hover:not(:focus) {
+            border-bottom-color: #d1d5db;
+        }
+
+        select {
+            cursor: pointer;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+            background-position: right 0px center;
+            background-repeat: no-repeat;
+            background-size: 16px;
+        }
+
+        .country-list {
+            margin-top: 16px;
+            padding: 0;
+            list-style: none;
+            opacity: 0;
+            max-height: 0;
+            overflow: hidden;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .country-list.show {
+            opacity: 1;
+            max-height: 200px;
+        }
+
+        .country-item {
+            padding: 12px 0;
+            color: #6b7280;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: color 0.2s ease;
+            border-bottom: 1px solid #f3f4f6;
+        }
+
+        .country-item:hover {
+            color: #2563eb;
+        }
+
+        .country-item:last-child {
+            border-bottom: none;
+        }
+
+        .phone-hint {
+            margin-top: 16px;
+            padding: 16px;
+            background-color: #f8fafc;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            color: #64748b;
+            line-height: 1.5;
+            border-left: 3px solid #2563eb;
+        }
+
+        .phone-hint strong {
+            color: #2563eb;
+            font-weight: 600;
+        }
+
+        .validation-message {
+            margin-top: 8px;
+            padding: 8px 0;
+            font-size: 0.85rem;
+            font-weight: 500;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .validation-message.error {
+            color: #dc2626;
+            animation: shake 0.4s ease-in-out;
+        }
+
+        .validation-message.success {
+            color: #16a34a;
+            animation: bounce 0.4s ease-in-out;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-2px); }
+            75% { transform: translateX(2px); }
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-2px); }
+        }
+
+        .call-button {
+            width: 100%;
+            background-color: #2563eb;
+            color: white;
+            border: none;
+            padding: 18px 24px;
+            border-radius: 16px;
+            font-size: 1.05rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            position: relative;
+            overflow: hidden;
+            animation: fadeInUp 0.6s cubic-bezier(0.4, 0, 0.2, 1) 0.8s both;
+        }
+
+        .call-button:hover:not(:disabled) {
+            background-color: #1d4ed8;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(37, 99, 235, 0.3);
+        }
+
+        .call-button:active {
+            transform: translateY(0);
+        }
+
+        .call-button:disabled {
+            background-color: #9ca3af;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .loading-spinner {
+            display: none;
+            width: 18px;
+            height: 18px;
+            border: 2px solid transparent;
+            border-top: 2px solid white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .status-message {
+            margin-top: 24px;
+            padding: 16px;
+            border-radius: 12px;
+            font-weight: 500;
+            text-align: center;
+            opacity: 0;
+            transform: translateY(15px);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .status-message.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .status-message.success {
+            background-color: #f0fdf4;
+            color: #16a34a;
+            border: 1px solid #bbf7d0;
+        }
+
+        .status-message.error {
+            background-color: #fef2f2;
+            color: #dc2626;
+            border: 1px solid #fecaca;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            padding-top: 24px;
+            border-top: 1px solid #f3f4f6;
+            animation: fadeInUp 0.6s cubic-bezier(0.4, 0, 0.2, 1) 1s both;
+        }
+
+        .footer p {
+            color: #9ca3af;
+            font-size: 0.85rem;
+            margin: 0;
+            font-weight: 400;
+        }
+
+        .footer strong {
+            color: #2563eb;
+            font-weight: 600;
+        }
+
+        .menu-dot {
+            position: absolute;
+            bottom: 24px;
+            left: 40px;
+            width: 8px;
+            height: 8px;
+            background-color: #2563eb;
+            border-radius: 50%;
+            animation: fadeInUp 0.6s cubic-bezier(0.4, 0, 0.2, 1) 1.2s both;
+        }
+
+        @media (max-width: 480px) {
+            .platform-container {
+                padding: 40px 32px;
+                margin: 16px;
+                border-radius: 28px;
+            }
+            
+            .amenitiz-logo {
+                font-size: 2rem;
+            }
+            
+            .header h1 {
+                font-size: 1.35rem;
+            }
+            
+            input[type="text"], select {
+                font-size: 1rem;
+            }
+            
+            .call-button {
+                padding: 16px 20px;
+                font-size: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="platform-container">
+        <div class="header">
+            <div class="amenitiz-logo">Amenitiz</div>
+            <h1>Agent Call Platform</h1>
+            <p>Initiate calls to direct lines<br>with confidence and precision</p>
+        </div>
+
+        <form id="callForm">
+            <div class="form-group">
+                <label for="country">Country</label>
+                <select id="country" required>
+                    <option value="">Select destination</option>
+                    <option value="429143">🇫🇷 French</option>
+                    <option value="429144">🇮🇹 Italian</option>
+                    <option value="429145">🇵🇹 Portuguese</option>
+                    <option value="429146">🇬🇧 English</option>
+                    <option value="429147">🇪🇸 Spanish</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="phoneNumber">Phone Number</label>
+                <input type="text" id="phoneNumber" placeholder="00 + country code + number" required>
+                <div class="phone-hint">
+                    <strong>Format:</strong> International format with 00 + country prefix<br>
+                    <strong>Examples:</strong><br>
+                    France: 0033612345678<br>
+                    Spain: 0034612345678<br>
+                    Italy: 0039612345678
+                </div>
+                <div id="phoneValidation" class="validation-message" style="display: none;"></div>
+            </div>
+
+            <button type="submit" class="call-button" id="callButton">
+                <span class="loading-spinner" id="loadingSpinner"></span>
+                <span id="buttonText">Initiate Call</span>
+            </button>
+        </form>
+
+        <div id="statusMessage" class="status-message"></div>
+        
+        <div class="footer">
+            <p>Powered by <strong>Amenitiz</strong><br>Hospitality Technology Solutions</p>
+            <div class="share-info">
+                📋 Save this page or share the link with your team for quick access
+            </div>
+        </div>
+
+        <div class="menu-dot"></div>
+    </div>
+
+    <script>
+        const API_CONFIG = {
+            // Your working Zapier webhook URL
+            zapierUrl: 'https://hooks.zapier.com/hooks/catch/17640320/uugktad/',
+            // Backup: PHP proxy (in case needed)
+            phpProxyUrl: 'http://care-ops-amenitiz.gt.tc:8000/amenitiz-proxy.php'
+        };;;
+
+        const form = document.getElementById('callForm');
+        const phoneInput = document.getElementById('phoneNumber');
+        const countrySelect = document.getElementById('country');
+        const callButton = document.getElementById('callButton');
+        const loadingSpinner = document.getElementById('loadingSpinner');
+        const buttonText = document.getElementById('buttonText');
+        const statusMessage = document.getElementById('statusMessage');
+        const phoneValidation = document.getElementById('phoneValidation');
+
+        const phonePatterns = {
+            '429143': /^00(33|590|594|596|262|508)[0-9]{8,9}$/,
+            '429144': /^0039[0-9]{9,10}$/,
+            '429145': /^00351[0-9]{9}$/,
+            '429146': /^0044[0-9]{10}$/,
+            '429147': /^0034[0-9]{9}$/
+        };
+
+        function validatePhoneNumber(phone, countryCode) {
+            if (!phone.startsWith('00')) {
+                return { valid: false, message: 'Phone number must start with 00 + country prefix' };
+            }
+
+            if (countryCode && phonePatterns[countryCode]) {
+                if (!phonePatterns[countryCode].test(phone)) {
+                    return { 
+                        valid: false, 
+                        message: 'Invalid phone format for selected country' 
+                    };
+                }
+            }
+
+            if (phone.length < 10 || phone.length > 15) {
+                return { valid: false, message: 'Phone number should be between 10-15 digits' };
+            }
+
+            return { valid: true, message: 'Phone number format is valid' };
+        }
+
+        function showValidation(isValid, message) {
+            phoneValidation.style.display = 'block';
+            phoneValidation.className = `validation-message ${isValid ? 'success' : 'error'}`;
+            phoneValidation.textContent = message;
+        }
+
+        function showStatus(message, type) {
+            statusMessage.textContent = message;
+            statusMessage.className = `status-message ${type} show`;
+            
+            setTimeout(() => {
+                statusMessage.classList.remove('show');
+            }, 4000);
+        }
+
+        function setLoading(loading) {
+            callButton.disabled = loading;
+            loadingSpinner.style.display = loading ? 'inline-block' : 'none';
+            buttonText.textContent = loading ? 'Processing...' : 'Initiate Call';
+        }
+
+        phoneInput.addEventListener('input', function() {
+            const phone = this.value.trim();
+            const countryCode = countrySelect.value;
+            
+            if (phone.length > 3) {
+                const validation = validatePhoneNumber(phone, countryCode);
+                showValidation(validation.valid, validation.message);
+            } else {
+                phoneValidation.style.display = 'none';
+            }
+        });
+
+        countrySelect.addEventListener('change', function() {
+            const phone = phoneInput.value.trim();
+            if (phone.length > 3) {
+                const validation = validatePhoneNumber(phone, this.value);
+                showValidation(validation.valid, validation.message);
+            }
+        });
+
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const phoneNumber = phoneInput.value.trim();
+            const nodeId = countrySelect.value;
+            
+            const validation = validatePhoneNumber(phoneNumber, nodeId);
+            if (!validation.valid) {
+                showStatus(validation.message, 'error');
+                return;
+            }
+
+            if (!nodeId) {
+                showStatus('Please select a country', 'error');
+                return;
+            }
+
+            setLoading(true);
+
+            try {
+                // Use Zapier webhook (much simpler than N8N!)
+                const payload = {
+                    action: 'initiate_call',
+                    data: {
+                        nodeId: nodeId,
+                        phoneNumber: phoneNumber,
+                        country: countrySelect.options[countrySelect.selectedIndex].text,
+                        timestamp: new Date().toISOString(),
+                        agent: 'web-platform'
+                    }
+                };
+                
+                console.log('Sending to Zapier:', API_CONFIG.zapierUrl);
+                console.log('Payload:', payload);
+                
+                // Create form data with nested structure for Zapier
+                const formData = new FormData();
+                formData.append('action', 'initiate_call');
+                formData.append('data[nodeId]', nodeId);
+                formData.append('data[phoneNumber]', phoneNumber);
+                formData.append('data[country]', countrySelect.options[countrySelect.selectedIndex].text);
+                formData.append('data[timestamp]', new Date().toISOString());
+                formData.append('data[agent]', 'web-platform');
+                
+                const response = await fetch(API_CONFIG.zapierUrl, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (response.ok) {
+                    // Zapier typically returns 200 for successful webhook receipt
+                    showStatus(`Call initiated successfully to ${phoneNumber}`, 'success');
+                    
+                    setTimeout(() => {
+                        form.reset();
+                        phoneValidation.style.display = 'none';
+                    }, 2000);
+                } else {
+                    console.error('Zapier webhook error:', response.status);
+                    showStatus(`Service error: ${response.status}`, 'error');
+                }
+            } catch (error) {
+                console.error('Network error:', error);
+                showStatus('Network error. Please try again.', 'error');
+            } finally {
+                setLoading(false);
+            }
+        });
+
+        countrySelect.addEventListener('change', function() {
+            if (this.value) {
+                phoneInput.style.borderBottomColor = '#2563eb';
+                phoneInput.focus();
+                
+                setTimeout(() => {
+                    phoneInput.style.borderBottomColor = '#e5e7eb';
+                }, 300);
+            }
+        });
+    </script>
+</body>
+</html>

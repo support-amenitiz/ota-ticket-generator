@@ -630,66 +630,204 @@
             }
         }
 
+        // Troubleshooting Library for OTA Errors
+        const troubleshootingLibrary = {
+            airbnb: {
+                '500': {
+                    name: 'Unknown Server Error',
+                    cause: 'Airbnb system is down',
+                    resolution: 'agent',
+                    steps: 'Send a new update. If not fixed, shoot connection and try again.',
+                    macro: 'Dear customer, we detected a temporary server issue with Airbnb. We have resolved this on our end and your connection should be working normally now. No further action is needed from your side.'
+                },
+                '400_price_high': {
+                    name: 'Price Too High Error',
+                    cause: 'Daily price exceeds Airbnb\'s maximum limit',
+                    resolution: 'client',
+                    steps: 'Check inventory for prices above the mentioned amount. If using a different currency, adjust currency settings on Airbnb. Share details of affected dates and listings with the client and ask them to adjust pricing accordingly.',
+                    macro: 'Dear customer, your daily price exceeds Airbnb\'s maximum limit of $100,000. Please check your inventory for prices above this amount. If you\'re using a different currency, please adjust your currency settings on Airbnb. You\'ll need to modify the pricing for the affected dates and listings.'
+                },
+                '400_price_low': {
+                    name: 'Price Too Low Error',
+                    cause: 'Daily price is too low according to Airbnb\'s threshold',
+                    resolution: 'client',
+                    steps: 'Check inventory for prices under the mentioned amount. If using a different currency, adjust currency settings on Airbnb. Share details of affected dates and listings with the client and ask them to adjust pricing accordingly.',
+                    macro: 'Dear customer, your daily price is below Airbnb\'s minimum threshold. Please check your inventory for prices under the required minimum. If you\'re using a different currency, please adjust your currency settings on Airbnb. You\'ll need to modify the pricing for the affected dates and listings.'
+                },
+                '400_multiple_inventories': {
+                    name: 'Multiple Inventories Error',
+                    cause: 'Airbnb\'s listing setup does not allow sending multiple availabilities for the same property',
+                    resolution: 'client',
+                    steps: 'Copy the message from the logs. Share it with the client and ask them to check with Airbnb if this setup can be modified. If Airbnb does not support this change, the client will need to create individual listings on Airbnb. We will then mirror this structure on Amenitiz to ensure consistency.',
+                    macro: 'Dear customer, your listing\'s property type does not support multiple inventories on Airbnb. Please check with Airbnb if this setup can be modified. If not supported, you\'ll need to create individual listings on Airbnb, and we\'ll mirror this structure on Amenitiz for consistency.'
+                },
+                '400_long_term': {
+                    name: 'Long-Term Rentals Only Error',
+                    cause: 'Airbnb\'s listing setup only allows long-term rentals',
+                    resolution: 'client',
+                    steps: 'Send a message to the client to let them know they have to either: Adjust the minimum stay value to match Airbnb requirements. The host needs to go through registration on Airbnb.',
+                    macro: 'Dear customer, your Airbnb listing is configured for long-term rentals only (90+ days). You have two options: 1) Adjust your minimum stay value to match Airbnb\'s requirements, or 2) Complete the registration process on Airbnb to allow shorter stays.'
+                },
+                'terms_declined': {
+                    name: 'Declined Terms of Service',
+                    cause: 'Host has declined Terms & Conditions',
+                    resolution: 'client',
+                    steps: 'Reach out letting them know their connection is showing an error because they declined Airbnb terms of services. Prompt them to confirm if they wish to do so or if they don\'t need the connection anymore. Act accordingly their answer: a. If T&S accepted - Launch a new update. b. If connection not needed - disconnect',
+                    macro: 'Dear customer, your Airbnb connection is showing an error because the Terms of Service were declined. Please confirm: Do you want to accept the latest Terms of Service to continue using the connection, or would you prefer to disconnect this integration? Please let us know how you\'d like to proceed.'
+                }
+            },
+            booking_com: {
+                'currency_mismatch': {
+                    name: 'Currency Mismatch Error',
+                    cause: 'Currency mismatch between Amenitiz and Booking.com',
+                    resolution: 'agent',
+                    steps: 'Add multi-currency if needed.',
+                    macro: 'Dear customer, we detected a currency mismatch issue with your Booking.com connection. We have resolved this on our end by adjusting the currency settings. Your connection should now be working normally.'
+                },
+                'MISSING_ELEMENT': {
+                    name: 'Missing Element Error',
+                    cause: 'Unmapped rooms, rates, or products',
+                    resolution: 'agent',
+                    steps: 'Map rooms, rates, and products. Reactivate connection.',
+                    macro: 'Dear customer, we found unmapped rooms, rates, or products in your Booking.com connection. We have corrected the mapping and reactivated your connection. Everything should be working normally now.'
+                },
+                'RATE_EDITABLE_ONLY_ON_EXTRANET': {
+                    name: 'Rate Editable Error',
+                    cause: 'Rate plans are derived from the Standard rate or the client had another Channel Manager before',
+                    resolution: 'agent',
+                    steps: 'Shoot the connection. Delete the derived rate. Create the rate as independent. Reconnect.',
+                    macro: 'Dear customer, we detected an issue with your rate configuration on Booking.com. We have reset your connection and reconfigured your rates to work independently. Your connection has been restored and should be functioning normally now.'
+                },
+                'LengthOfStay': {
+                    name: 'Length of Stay Error',
+                    cause: 'Accommodation not selected in Booking.com rate plan',
+                    resolution: 'agent',
+                    steps: 'Go to Amenitiz admin. Navigate to Booking Engine → Rate plans. Verify accommodations are ticked in OTAs rate plan. Send bulk update on Batcave.',
+                    macro: 'Dear customer, we found a configuration issue with your rate plan accommodations on Booking.com. We have corrected the settings and sent an update. Your connection should now be working properly.'
+                },
+                'BookingLimit': {
+                    name: 'Booking Limit Error',
+                    cause: 'Unit number mismatch between Booking and Amenitiz',
+                    resolution: 'agent',
+                    steps: 'Check unit numbers in both systems. Adjust if necessary.',
+                    macro: 'Dear customer, we detected a unit number mismatch in your Booking.com connection. We have synchronized the unit numbers between both systems. Your connection is now working correctly.'
+                },
+                'Rate_plan_not_found': {
+                    name: 'Rate Plan Not Found Error',
+                    cause: 'Unmapped rate plan in the channel manager',
+                    resolution: 'agent',
+                    steps: 'Verify all rate plans are mapped. Check for deleted derived rate plans still in connection. Ensure all Booking.com rate plans are mapped.',
+                    macro: 'Dear customer, we detected an unmapped rate plan issue in your Booking.com connection. We have verified and corrected all rate plan mappings. Your connection should now be working properly.'
+                },
+                'HOTEL_ACCESS_DENIED': {
+                    name: 'Hotel Access Denied Error',
+                    cause: 'Connection not approved from Booking Amenitiz side or connectivity removed by client',
+                    resolution: 'mixed',
+                    steps: 'Check if connection approved from Booking connectivity account. If removed by client, deactivate the affected channel in the batcave and inform client.',
+                    macro: 'Dear customer, we detected an access issue with your Booking.com connection. This could be due to connection approval status or changes on your Booking.com account. Please verify your connection status in your Booking.com extranet, or let us know if you no longer need this connection.'
+                },
+                'RATE_NOT_ACTIVE_FOR_ROOM': {
+                    name: 'Rate Not Active for Room Error',
+                    cause: 'Room not selected in rates configuration in Booking.com side or rate deleted from Booking.com side',
+                    resolution: 'agent',
+                    steps: 'Check all Booking.com rates in Amenitiz for room selection. Verify room selection in Booking.com rates. Adjust room selection, save settings, and relaunch update in the batcave. If rate deleted from Booking.com, trash that rate in connection settings.',
+                    macro: 'Dear customer, we found a room configuration issue with your Booking.com rates. We have corrected the room selections and updated your connection. Everything should be working normally now.'
+                },
+                'RATE_IS_A_SLAVE_RATE': {
+                    name: 'Rate Is A Slave Rate Error',
+                    cause: 'Rates in Booking are "derived" (child) rates',
+                    resolution: 'agent',
+                    steps: 'Change setting from Booking.com rate or Delete Booking.com rate plans in Amenitiz and map only the standard rate.',
+                    macro: 'Dear customer, we detected an issue with derived rates in your Booking.com connection. We have reconfigured your rates to use independent rate plans. Your connection has been updated and should be working correctly now.'
+                },
+                'ROOM_ELEMENT_REQUIRED': {
+                    name: 'Room Element Required Error',
+                    cause: 'Room not ticked in Amenitiz connected rate to Booking or product not mapped in the Booking.com connection',
+                    resolution: 'agent',
+                    steps: 'Double-check connected rate and associated rooms and product mapping. Tick the missing room in the Amenitiz connected rate. Or adjust rate structure to reflect properly Amenitiz rates in Booking.com.',
+                    macro: 'Dear customer, we found a room mapping issue in your Booking.com connection. We have corrected the room associations and product mappings. Your connection should now be working properly.'
+                },
+                'ROOM_ID_INVALID': {
+                    name: 'Room ID Invalid Error',
+                    cause: 'Room has been removed on Booking.com side',
+                    resolution: 'agent',
+                    steps: 'Unmap the room in the connection settings in the batcave.',
+                    macro: 'Dear customer, we detected that a room was removed from your Booking.com account. We have updated our connection settings to reflect this change. Your connection should now be working correctly.'
+                },
+                'PRICE_BELOW_MIN_PRICE': {
+                    name: 'Price Below Minimum Error',
+                    cause: 'Price is below minimum threshold (often typo mistake)',
+                    resolution: 'client',
+                    steps: 'Check error code details to understand which date is impacted, verify information in the inventory, and reach out to the client letting them know that they need to modify the price accordingly.',
+                    macro: 'Dear customer, some of your prices are below Booking.com\'s minimum price threshold. Please check your inventory for the affected dates and adjust your pricing accordingly. We can provide specific details about which dates are impacted if needed.'
+                },
+                'NOT_A_VALID_RESTRICTION': {
+                    name: 'Invalid Restriction Error',
+                    cause: 'Property license type imposes specific stay restrictions due to local regulations',
+                    resolution: 'client',
+                    steps: 'Inform the client that the property\'s license type imposes specific stay restrictions. Advise them to update the license type in the Booking.com extranet to resolve the issue.',
+                    macro: 'Dear customer, your property\'s license type on Booking.com imposes specific stay restrictions due to local regulations. To resolve this, please update your license type in your Booking.com extranet under Property > General Info. This will allow you to set the desired restrictions.'
+                },
+                'PRICE_EXCEEDS_MAX_PRICE': {
+                    name: 'Price Exceeds Maximum Error',
+                    cause: 'Price set too high above maximum allowed limit. Usually a typo mistake in the inventory or a currency issue',
+                    resolution: 'client',
+                    steps: 'Verify where the error is located for which date and which rooms and inform the client so he can adjust his price in the inventory.',
+                    macro: 'Dear customer, some of your prices exceed Booking.com\'s maximum allowed limit. This is usually due to a typo in your inventory or a currency issue. Please check your pricing for the affected dates and rooms and adjust accordingly. We can provide specific details about which dates and rooms are impacted if needed.'
+                }
+            },
+            expedia: {
+                'hotel_not_found': {
+                    name: 'Hotel ID Error',
+                    cause: 'Invalid hotel ID or Amenitiz not added to Expedia connectivity',
+                    resolution: 'agent',
+                    steps: 'Verify connection launch on Expedia Connectivity. Confirm hotel ID correctness.',
+                    macro: 'Dear customer, we detected an issue with your hotel ID configuration on Expedia. We have verified and corrected the connection setup. Your Expedia connection should now be working properly.'
+                },
+                '3103': {
+                    name: 'Currency Mismatch Error',
+                    cause: 'Currency mismatch (multi-currency tool doesn\'t work with Expedia)',
+                    resolution: 'client',
+                    steps: 'Client must request currency change directly from Expedia.',
+                    macro: 'Dear customer, there\'s a currency mismatch in your Expedia connection. Since our multi-currency tool doesn\'t work with Expedia, you\'ll need to request a currency change directly from Expedia to resolve this issue.'
+                },
+                '3202': {
+                    name: 'Hotel Access Denied Error',
+                    cause: 'Connectivity provider had been removed on Expedia side',
+                    resolution: 'client',
+                    steps: 'Open an outbound case to let the customer know they have to confirm this channel does not need a CM connection anymore, and deactivate the connection on our end.',
+                    macro: 'Dear customer, your Expedia connection has been removed from their side. Please confirm if you still need this channel manager connection. If not, we\'ll deactivate it on our end. If you do need it, please contact Expedia to restore the connection.'
+                },
+                '3010': {
+                    name: 'Validation Against Schema Failed Error',
+                    cause: 'Structure misalignment between Expedia and Amenitiz',
+                    resolution: 'agent',
+                    steps: 'Redo the connection from scratch, send bulk update, verify that data is sent without errors.',
+                    macro: 'Dear customer, we detected a structure misalignment issue with your Expedia connection. We have rebuilt the connection from scratch and sent a bulk update. Your connection should now be working correctly.'
+                }
+            }
+        };
+
         function generateTicketNote(row) {
             const error = parseErrorCode(row.error_code);
-            const ota = (row.message || 'Unknown').charAt(0).toUpperCase() + (row.message || 'Unknown').slice(1);
+            const ota = (row.message || 'Unknown').toLowerCase();
             
-            // Determine error type based on error code and message
-            let errorType = 'Unknown Error';
-            let troubleshootingSteps = '';
-            let macro = '';
-            let canResolveInternally = false;
-
-            // Analyze error patterns
-            const errorMessage = error.message.toLowerCase();
+            // Try to match error with troubleshooting library
+            const troubleshootingData = findTroubleshootingMatch(ota, error);
             
-            if (errorMessage.includes('permission') || errorMessage.includes('access')) {
-                errorType = 'Permission/Access Error';
-                troubleshootingSteps = '1. Verify API credentials and permissions\n2. Check if the hotel/listing is properly connected\n3. Validate account access rights\n4. Contact OTA support if credentials are valid';
-                canResolveInternally = false;
-                macro = 'Action Needed by Client Macro: Dear customer, we detected a permission error with your OTA connection. Please verify your account credentials and ensure proper access rights are granted. You may need to reconnect your account or contact the OTA directly.';
-            } else if (errorMessage.includes('long-term rental') || errorMessage.includes('365 or more') || errorMessage.includes('31 or more')) {
-                errorType = 'Long-Term Rentals Restriction';
-                troubleshootingSteps = '1. Review listing settings for minimum stay requirements\n2. Check OTA account restrictions\n3. Advise client to adjust minimum stay or complete registration';
-                canResolveInternally = false;
-                macro = 'Action Needed by Client Macro: Dear customer, your listing is restricted to long-term rentals only. Please adjust your minimum stay settings or complete the required registration process with the OTA to allow shorter stays.';
-            } else if (errorMessage.includes('terms of service') || errorMessage.includes('declined')) {
-                errorType = 'Terms of Service Issue';
-                troubleshootingSteps = '1. Inform client about ToS requirement\n2. Provide guidance on accepting terms\n3. Offer option to disconnect if not accepted';
-                canResolveInternally = false;
-                macro = 'Action Needed by Client Macro: Dear customer, your connection shows an error because the Terms of Service were declined. Please log into your OTA account and accept the latest Terms of Service to continue using the service, or let us know if you\'d like to disconnect this integration.';
-            } else if (errorMessage.includes('cleaning fee') || errorMessage.includes('minimum nightly price')) {
-                errorType = 'Pricing Configuration Error';
-                troubleshootingSteps = '1. Review pricing structure\n2. Calculate appropriate nightly rate based on cleaning fee\n3. Advise client on pricing adjustments';
-                canResolveInternally = false;
-                macro = 'Action Needed by Client Macro: Dear customer, there\'s an issue with your pricing configuration. Based on your cleaning fee amount, you need to adjust your minimum nightly price. Please review and update your pricing settings.';
-            } else if (errorMessage.includes('property type') || errorMessage.includes('multiple inventories')) {
-                errorType = 'Property Configuration Error';
-                troubleshootingSteps = '1. Review property type settings\n2. Check inventory configuration\n3. Advise on supported property types';
-                canResolveInternally = false;
-                macro = 'Action Needed by Client Macro: Dear customer, your property type configuration doesn\'t support the current inventory setup. Please review your property settings and adjust them according to the OTA requirements.';
-            } else {
-                errorType = 'General OTA Error';
-                troubleshootingSteps = '1. Review error details\n2. Check OTA documentation\n3. Contact technical support if needed\n4. Provide client with specific guidance';
-                canResolveInternally = false;
-                macro = 'Action Needed by Client Macro: Dear customer, we\'ve identified an issue with your OTA connection. Our technical team is investigating, and we\'ll provide you with specific steps to resolve this issue shortly.';
-            }
-
-            return `📋 Error Details:
-OTA: ${ota}
+            if (troubleshootingData) {
+                const macro = troubleshootingData.resolution === 'agent' 
+                    ? troubleshootingData.macro
+                    : troubleshootingData.macro;
+                
+                return `📋 Error Details:
+OTA: ${ota.charAt(0).toUpperCase() + ota.slice(1)}
 Error Code: ${error.code}
-Error Type: ${errorType}
-Error Message: ${error.message}
-
-🔍 Reason for Error:
-${getErrorReason(errorType, error.message)}
 
 🛠️ Troubleshooting Steps for the Agent:
-${troubleshootingSteps}
+${troubleshootingData.steps}
 
-✅ Resolution Status: ${canResolveInternally ? 'Can be resolved internally' : 'Requires client action'}
-
-💬 Appropriate Macro:
+💬 Macro (Client Message Proposal):
 ${macro}
 
 📊 Additional Information:
@@ -697,6 +835,135 @@ ${macro}
 - Account Owner ID: ${row['payload.account_owner_id'] || 'N/A'}
 - OTA Hotel ID: ${row['payload.ota_hotel_id'] || 'N/A'}
 - Batcave Link: ${row.batcave_link || 'N/A'}`;
+            }
+            
+            // Fallback to generic format if no match found
+            return `📋 Error Details:
+OTA: ${ota.charAt(0).toUpperCase() + ota.slice(1)}
+Error Code: ${error.code}
+Error Message: ${error.message}
+
+🛠️ Troubleshooting Steps for the Agent:
+1. Review error details in Batcave link
+2. Check OTA documentation for specific error code
+3. Contact technical support if needed
+4. Provide client with specific guidance based on findings
+
+💬 Macro (Client Message Proposal):
+Dear customer, we've identified an issue with your OTA connection. Our technical team is investigating this specific error and will provide you with detailed resolution steps shortly. We'll keep you updated on the progress.
+
+📊 Additional Information:
+- Hotel ID: ${row['payload.hotel_id'] || 'N/A'}
+- Account Owner ID: ${row['payload.account_owner_id'] || 'N/A'}
+- OTA Hotel ID: ${row['payload.ota_hotel_id'] || 'N/A'}
+- Batcave Link: ${row.batcave_link || 'N/A'}`;
+        }
+
+        function findTroubleshootingMatch(ota, error) {
+            let library = null;
+            
+            // Normalize OTA name and find the right library
+            if (ota.includes('airbnb')) {
+                library = troubleshootingLibrary.airbnb;
+            } else if (ota.includes('booking')) {
+                library = troubleshootingLibrary.booking_com;
+            } else if (ota.includes('expedia')) {
+                library = troubleshootingLibrary.expedia;
+            }
+            
+            if (!library) return null;
+            
+            // Try exact error code match first
+            if (library[error.code]) {
+                return library[error.code];
+            }
+            
+            // Try pattern matching for specific error types
+            const errorMessage = error.message.toLowerCase();
+            
+            // Airbnb specific patterns
+            if (ota.includes('airbnb')) {
+                if (errorMessage.includes('price is too high') || errorMessage.includes('maximum is')) {
+                    return library['400_price_high'];
+                }
+                if (errorMessage.includes('price is too low') || errorMessage.includes('minimum is')) {
+                    return library['400_price_low'];
+                }
+                if (errorMessage.includes('multiple inventories')) {
+                    return library['400_multiple_inventories'];
+                }
+                if (errorMessage.includes('long-term rental') || errorMessage.includes('90 or more')) {
+                    return library['400_long_term'];
+                }
+                if (errorMessage.includes('declined the terms of service')) {
+                    return library['terms_declined'];
+                }
+            }
+            
+            // Booking.com specific patterns
+            if (ota.includes('booking')) {
+                if (errorMessage.includes('currency') && errorMessage.includes('match')) {
+                    return library['currency_mismatch'];
+                }
+                if (errorMessage.includes('missing') && errorMessage.includes('element')) {
+                    return library['MISSING_ELEMENT'];
+                }
+                if (errorMessage.includes('rate_editable_only_on_extranet')) {
+                    return library['RATE_EDITABLE_ONLY_ON_EXTRANET'];
+                }
+                if (errorMessage.includes('lengthofstay')) {
+                    return library['LengthOfStay'];
+                }
+                if (errorMessage.includes('bookinglimit')) {
+                    return library['BookingLimit'];
+                }
+                if (errorMessage.includes('hotel_access_denied') || errorMessage.includes('access') && errorMessage.includes('denied')) {
+                    return library['HOTEL_ACCESS_DENIED'];
+                }
+                if (errorMessage.includes('price_below_min_price') || (errorMessage.includes('price') && errorMessage.includes('below'))) {
+                    return library['PRICE_BELOW_MIN_PRICE'];
+                }
+                if (errorMessage.includes('not_a_valid_restriction') || errorMessage.includes('restriction')) {
+                    return library['NOT_A_VALID_RESTRICTION'];
+                }
+                if (errorMessage.includes('price_exceeds_max_price') || (errorMessage.includes('price') && errorMessage.includes('exceeds') && errorMessage.includes('max'))) {
+                    return library['PRICE_EXCEEDS_MAX_PRICE'];
+                }
+                // Additional Booking.com patterns
+                if (errorMessage.includes('rate_plan_not_found')) {
+                    return library['Rate_plan_not_found'] || library['RATE_PLAN_NOT_FOUND'];
+                }
+                if (errorMessage.includes('rate_not_active_for_room')) {
+                    return library['RATE_NOT_ACTIVE_FOR_ROOM'];
+                }
+                if (errorMessage.includes('rate_is_a_slave_rate')) {
+                    return library['RATE_IS_A_SLAVE_RATE'];
+                }
+                if (errorMessage.includes('room_element_required')) {
+                    return library['ROOM_ELEMENT_REQUIRED'];
+                }
+                if (errorMessage.includes('room_id_invalid')) {
+                    return library['ROOM_ID_INVALID'];
+                }
+            }
+            
+            // Expedia specific patterns
+            if (ota.includes('expedia')) {
+                if (errorMessage.includes('hotel id not found')) {
+                    return library['hotel_not_found'];
+                }
+                if (errorMessage.includes('3103') || (errorMessage.includes('currency') && errorMessage.includes('match'))) {
+                    return library['3103'];
+                }
+                if (errorMessage.includes('3202') || (errorMessage.includes('access') && errorMessage.includes('denied'))) {
+                    return library['3202'];
+                }
+                if (errorMessage.includes('3010') || errorMessage.includes('validation') && errorMessage.includes('schema')) {
+                    return library['3010'];
+                }
+            }
+            
+            return null;
         }
 
         function getErrorReason(errorType, errorMessage) {
@@ -843,15 +1110,30 @@ ${macro}
         function getErrorTypeFromMessage(errorMessage) {
             const message = errorMessage.toLowerCase();
             
-            if (message.includes('permission') || message.includes('access')) {
-                return 'Permission/Access Error';
-            } else if (message.includes('long-term rental') || message.includes('365 or more') || message.includes('31 or more')) {
+            // Check for specific OTA error patterns from troubleshooting library
+            if (message.includes('server error') || message.includes('system') || message.includes('500')) {
+                return 'Server Error';
+            } else if (message.includes('price') && (message.includes('high') || message.includes('low') || message.includes('maximum') || message.includes('minimum') || message.includes('exceeds'))) {
+                return 'Pricing Error';
+            } else if (message.includes('multiple inventories')) {
+                return 'Multiple Inventories Error';
+            } else if (message.includes('long-term rental') || message.includes('90 or more') || message.includes('31 or more')) {
                 return 'Long-Term Rentals Restriction';
             } else if (message.includes('terms of service') || message.includes('declined')) {
                 return 'Terms of Service Issue';
+            } else if (message.includes('currency') && message.includes('match')) {
+                return 'Currency Mismatch Error';
+            } else if (message.includes('missing') || message.includes('element')) {
+                return 'Missing Element Error';
+            } else if (message.includes('access') && message.includes('denied')) {
+                return 'Access Denied Error';
+            } else if (message.includes('hotel') && message.includes('not found')) {
+                return 'Hotel Not Found Error';
+            } else if (message.includes('permission') || message.includes('access')) {
+                return 'Permission/Access Error';
             } else if (message.includes('cleaning fee') || message.includes('minimum nightly price')) {
                 return 'Pricing Configuration Error';
-            } else if (message.includes('property type') || message.includes('multiple inventories')) {
+            } else if (message.includes('property type') || message.includes('inventories')) {
                 return 'Property Configuration Error';
             } else {
                 return 'General OTA Error';
@@ -861,19 +1143,46 @@ ${macro}
         function determineClientAction(errorMessage) {
             const message = errorMessage.toLowerCase();
             
-            // Most OTA errors require client action
-            if (message.includes('permission') || message.includes('access')) {
-                return 'true'; // Usually requires credential check/reconnection
+            // Agent resolvable errors (return 'false')
+            if (message.includes('server error') || message.includes('system')) {
+                return 'false'; // Internal server issues
+            } else if (message.includes('missing') && message.includes('element')) {
+                return 'false'; // Mapping issues
+            } else if (message.includes('currency') && message.includes('mismatch') && !message.includes('expedia')) {
+                return 'false'; // Currency issues (except Expedia)
+            } else if (message.includes('booking limit') || message.includes('unit number')) {
+                return 'false'; // Configuration sync issues
+            } else if (message.includes('rate') && (message.includes('editable') || message.includes('derived'))) {
+                return 'false'; // Rate configuration issues
+            } else if (message.includes('length of stay') && message.includes('accommodation')) {
+                return 'false'; // Rate plan issues
+            } else if (message.includes('validation') && message.includes('schema')) {
+                return 'false'; // Structure issues
+            }
+            
+            // Client action required errors (return 'true')
+            else if (message.includes('price') && (message.includes('high') || message.includes('low') || message.includes('exceeds'))) {
+                return 'true'; // Pricing adjustments
+            } else if (message.includes('multiple inventories')) {
+                return 'true'; // Property setup changes
             } else if (message.includes('long-term rental')) {
-                return 'true'; // Requires setting adjustment
-            } else if (message.includes('terms of service')) {
-                return 'true'; // Requires ToS acceptance
+                return 'true'; // Registration or stay adjustments
+            } else if (message.includes('terms of service') || message.includes('declined')) {
+                return 'true'; // ToS acceptance
+            } else if (message.includes('currency') && message.includes('expedia')) {
+                return 'true'; // Expedia currency changes
+            } else if (message.includes('access denied') && message.includes('removed')) {
+                return 'true'; // Connection restoration
+            } else if (message.includes('license') || message.includes('restriction')) {
+                return 'true'; // License type updates
+            } else if (message.includes('permission') || message.includes('access')) {
+                return 'true'; // Usually requires credential check/reconnection
             } else if (message.includes('cleaning fee') || message.includes('pricing')) {
                 return 'true'; // Requires pricing adjustment
             } else if (message.includes('property type')) {
                 return 'true'; // Requires property setting change
             } else {
-                return 'false'; // Can potentially be resolved internally
+                return 'false'; // Default to internal resolution attempt
             }
         }
 

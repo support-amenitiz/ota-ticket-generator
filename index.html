@@ -457,6 +457,10 @@
                 <div class="results-content" id="resultsContent"></div>
             </div>
         </div>
+
+        <footer style="text-align: center; padding: 20px; color: rgba(255, 255, 255, 0.7); font-size: 0.85rem; background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);">
+            <p>OTA Ticket Generator v2.0 | Enhanced with Comprehensive Troubleshooting Library | Last Updated: 28 Juillet 2025</p>
+        </footer>
     </div>
 
     <script>
@@ -638,42 +642,42 @@
                     cause: 'Airbnb system is down',
                     resolution: 'agent',
                     steps: 'Send a new update. If not fixed, shoot connection and try again.',
-                    macro: 'Dear customer, we detected a temporary server issue with Airbnb. We have resolved this on our end and your connection should be working normally now. No further action is needed from your side.'
+                    macro: 'Hello! We detected a temporary server issue with your Airbnb connection and have taken the necessary steps to resolve it proactively. We\'ve sent a new update to restore your connection, and everything should now be working normally. No action is needed on your end. If you notice any further issues, please don\'t hesitate to reach out. Best regards!'
                 },
                 '400_price_high': {
                     name: 'Price Too High Error',
                     cause: 'Daily price exceeds Airbnb\'s maximum limit',
                     resolution: 'client',
                     steps: 'Check inventory for prices above the mentioned amount. If using a different currency, adjust currency settings on Airbnb. Share details of affected dates and listings with the client and ask them to adjust pricing accordingly.',
-                    macro: 'Dear customer, your daily price exceeds Airbnb\'s maximum limit of $100,000. Please check your inventory for prices above this amount. If you\'re using a different currency, please adjust your currency settings on Airbnb. You\'ll need to modify the pricing for the affected dates and listings.'
+                    macro: 'Hello! We\'ve identified an issue with your Airbnb pricing where some daily rates exceed their maximum limit of $100,000. To resolve this, please review your inventory and adjust any prices above this threshold. If you\'re using a different currency, please also verify your currency settings in Airbnb. We can provide specific details about the affected dates and listings if needed. Please let us know once you\'ve made the adjustments. Best regards!'
                 },
                 '400_price_low': {
                     name: 'Price Too Low Error',
                     cause: 'Daily price is too low according to Airbnb\'s threshold',
                     resolution: 'client',
                     steps: 'Check inventory for prices under the mentioned amount. If using a different currency, adjust currency settings on Airbnb. Share details of affected dates and listings with the client and ask them to adjust pricing accordingly.',
-                    macro: 'Dear customer, your daily price is below Airbnb\'s minimum threshold. Please check your inventory for prices under the required minimum. If you\'re using a different currency, please adjust your currency settings on Airbnb. You\'ll need to modify the pricing for the affected dates and listings.'
+                    macro: 'Hello! We\'ve detected that some of your daily prices fall below Airbnb\'s minimum threshold. To resolve this, please review your inventory and adjust any prices that are under the required minimum. If you\'re using a different currency, please also check your currency settings in Airbnb. We\'re happy to provide specific details about which dates and listings are affected. Please let us know once you\'ve updated your pricing. Best regards!'
                 },
                 '400_multiple_inventories': {
                     name: 'Multiple Inventories Error',
                     cause: 'Airbnb\'s listing setup does not allow sending multiple availabilities for the same property',
                     resolution: 'client',
                     steps: 'Copy the message from the logs. Share it with the client and ask them to check with Airbnb if this setup can be modified. If Airbnb does not support this change, the client will need to create individual listings on Airbnb. We will then mirror this structure on Amenitiz to ensure consistency.',
-                    macro: 'Dear customer, your listing\'s property type does not support multiple inventories on Airbnb. Please check with Airbnb if this setup can be modified. If not supported, you\'ll need to create individual listings on Airbnb, and we\'ll mirror this structure on Amenitiz for consistency.'
+                    macro: 'Hello! We\'ve encountered an issue with your Airbnb listing setup - your property type doesn\'t support multiple inventories. To resolve this, please contact Airbnb directly to check if this configuration can be modified for your listing. If Airbnb doesn\'t support this change, you\'ll need to create individual listings on their platform, and we\'ll be happy to help mirror this structure in Amenitiz for consistency. Please let us know what you learn from Airbnb, and we\'ll assist with the next steps. Best regards!'
                 },
                 '400_long_term': {
                     name: 'Long-Term Rentals Only Error',
                     cause: 'Airbnb\'s listing setup only allows long-term rentals',
                     resolution: 'client',
                     steps: 'Send a message to the client to let them know they have to either: Adjust the minimum stay value to match Airbnb requirements. The host needs to go through registration on Airbnb.',
-                    macro: 'Dear customer, your Airbnb listing is configured for long-term rentals only (90+ days). You have two options: 1) Adjust your minimum stay value to match Airbnb\'s requirements, or 2) Complete the registration process on Airbnb to allow shorter stays.'
+                    macro: 'Hello! We\'ve identified that your Airbnb listing is currently configured for long-term rentals only (90+ days). To enable shorter stays, you have two options: either adjust your minimum stay settings to match Airbnb\'s requirements, or complete the registration process on Airbnb to allow shorter bookings. Please let us know which option works best for you, and we\'ll guide you through the necessary steps. Feel free to reach out if you need any assistance! Best regards!'
                 },
                 'terms_declined': {
                     name: 'Declined Terms of Service',
                     cause: 'Host has declined Terms & Conditions',
                     resolution: 'client',
                     steps: 'Reach out letting them know their connection is showing an error because they declined Airbnb terms of services. Prompt them to confirm if they wish to do so or if they don\'t need the connection anymore. Act accordingly their answer: a. If T&S accepted - Launch a new update. b. If connection not needed - disconnect',
-                    macro: 'Dear customer, your Airbnb connection is showing an error because the Terms of Service were declined. Please confirm: Do you want to accept the latest Terms of Service to continue using the connection, or would you prefer to disconnect this integration? Please let us know how you\'d like to proceed.'
+                    macro: 'Hello! We\'ve noticed that your Airbnb connection is experiencing an issue because the Terms of Service were declined. To resolve this, please let us know how you\'d like to proceed: would you prefer to accept the latest Terms of Service to continue using the connection, or would you like us to disconnect this integration? Once you let us know your preference, we\'ll take care of the necessary steps immediately. Please don\'t hesitate to reach out if you have any questions! Best regards!'
                 }
             },
             booking_com: {
@@ -682,14 +686,14 @@
                     cause: 'Currency mismatch between Amenitiz and Booking.com',
                     resolution: 'agent',
                     steps: 'Add multi-currency if needed.',
-                    macro: 'Dear customer, we detected a currency mismatch issue with your Booking.com connection. We have resolved this on our end by adjusting the currency settings. Your connection should now be working normally.'
+                    macro: 'Hello! We detected a currency mismatch issue with your Booking.com connection and have taken the necessary steps to resolve it proactively. We\'ve adjusted the currency settings on our end, and your connection should now be working normally. No action is needed from your side. If you notice any issues, please feel free to reach out. Best regards!'
                 },
                 'MISSING_ELEMENT': {
                     name: 'Missing Element Error',
                     cause: 'Unmapped rooms, rates, or products',
                     resolution: 'agent',
                     steps: 'Map rooms, rates, and products. Reactivate connection.',
-                    macro: 'Dear customer, we found unmapped rooms, rates, or products in your Booking.com connection. We have corrected the mapping and reactivated your connection. Everything should be working normally now.'
+                    macro: 'Hello! We identified some unmapped rooms, rates, or products in your Booking.com connection and have taken the necessary steps to resolve this proactively. We\'ve corrected all the mappings and reactivated your connection. Everything should now be working normally, and no action is needed on your end. Please let us know if you notice any issues. Best regards!'
                 },
                 'RATE_EDITABLE_ONLY_ON_EXTRANET': {
                     name: 'Rate Editable Error',
@@ -759,7 +763,7 @@
                     cause: 'Price is below minimum threshold (often typo mistake)',
                     resolution: 'client',
                     steps: 'Check error code details to understand which date is impacted, verify information in the inventory, and reach out to the client letting them know that they need to modify the price accordingly.',
-                    macro: 'Dear customer, some of your prices are below Booking.com\'s minimum price threshold. Please check your inventory for the affected dates and adjust your pricing accordingly. We can provide specific details about which dates are impacted if needed.'
+                    macro: 'Hello! We\'ve identified that some of your prices are below Booking.com\'s minimum threshold. To resolve this, please review your inventory and adjust the pricing for the affected dates. This is often due to a typo in the pricing setup. We can provide specific details about which dates and rooms are impacted if needed. Please let us know once you\'ve updated your pricing. Best regards!'
                 },
                 'NOT_A_VALID_RESTRICTION': {
                     name: 'Invalid Restriction Error',

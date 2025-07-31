@@ -816,22 +816,24 @@
             const error = parseErrorCode(row.error_code);
             const ota = (row.message || 'Unknown').toLowerCase();
             
+            // Extract Room ID (the numbers) from error_code if available
+            const roomId = extractRoomId(row.error_code);
+            
             // Try to match error with troubleshooting library
             const troubleshootingData = findTroubleshootingMatch(ota, error);
             
             if (troubleshootingData) {
-                const macro = troubleshootingData.resolution === 'agent' 
-                    ? troubleshootingData.macro
-                    : troubleshootingData.macro;
+                const macro = generateMacro(troubleshootingData, error);
                 
                 return `📋 Error Details:
 OTA: ${ota.charAt(0).toUpperCase() + ota.slice(1)}
-Error Code: ${error.code}
+Error Code: ${error.message || error.code}
+Room ID: ${roomId}
 
 🛠️ Troubleshooting Steps for the Agent:
 ${troubleshootingData.steps}
 
-💬 Macro (Client Message Proposal):
+💬 Macro:
 ${macro}
 
 📊 Additional Information:
@@ -844,8 +846,8 @@ ${macro}
             // Fallback to generic format if no match found
             return `📋 Error Details:
 OTA: ${ota.charAt(0).toUpperCase() + ota.slice(1)}
-Error Code: ${error.code}
-Error Message: ${error.message}
+Error Code: ${error.message || error.code}
+Room ID: ${roomId}
 
 🛠️ Troubleshooting Steps for the Agent:
 1. Review error details in Batcave link
@@ -853,14 +855,78 @@ Error Message: ${error.message}
 3. Contact technical support if needed
 4. Provide client with specific guidance based on findings
 
-💬 Macro (Client Message Proposal):
-Dear customer, we've identified an issue with your OTA connection. Our technical team is investigating this specific error and will provide you with detailed resolution steps shortly. We'll keep you updated on the progress.
+💬 Macro:
+Hello! We've identified an issue with your OTA connection and are currently investigating this specific error. Our technical team is working on a resolution and will provide you with detailed steps shortly. We'll keep you updated on our progress. Please don't hesitate to reach out if you have any questions. Best regards!
 
 📊 Additional Information:
 - Hotel ID: ${row['payload.hotel_id'] || 'N/A'}
 - Account Owner ID: ${row['payload.account_owner_id'] || 'N/A'}
 - OTA Hotel ID: ${row['payload.ota_hotel_id'] || 'N/A'}
 - Batcave Link: ${row.batcave_link || 'N/A'}`;
+        }
+
+        function extractRoomId(errorCodeString) {
+            if (!errorCodeString) return 'N/A';
+            
+            try {
+                // Try to parse as JSON first
+                const errorObj = JSON.parse(errorCodeString);
+                // Look for numeric values that could be room IDs
+                const numbers = JSON.stringify(errorObj).match(/\d+/g);
+                return numbers ? numbers.join(', ') : 'N/A';
+            } catch (e) {
+                // If not JSON, extract numbers from the raw string
+                const numbers = errorCodeString.match(/\d+/g);
+                return numbers ? numbers.join(', ') : 'N/A';
+            }
+        }
+
+        function generateMacro(troubleshootingData, error) {
+            if (troubleshootingData.resolution === 'agent') {
+                // Internal resolution macro
+                return `Hello! We detected ${troubleshootingData.name.toLowerCase()} with your ${getOtaFromError(error)} connection and have taken the necessary steps to resolve it proactively. ${getInternalResolutionMessage(troubleshootingData.name)} Your connection should now be working normally, and no action is needed on your end. Please let us know if you notice any issues. Best regards!`;
+            } else {
+                // Client action required macro
+                return troubleshootingData.macro || `Hello! We've identified ${troubleshootingData.name.toLowerCase()} with your connection. ${getClientActionMessage(troubleshootingData.name)} Please let us know once you've completed these steps, and we'll be happy to assist further if needed. Best regards!`;
+            }
+        }
+
+        function getInternalResolutionMessage(errorName) {
+            switch (errorName) {
+                case 'Unknown Server Error':
+                    return 'We\'ve sent a new update to restore your connection.';
+                case 'Currency Mismatch Error':
+                    return 'We\'ve adjusted the currency settings on our end.';
+                case 'Missing Element Error':
+                    return 'We\'ve corrected all the mappings and reactivated your connection.';
+                case 'Rate Editable Error':
+                    return 'We\'ve reset your connection and reconfigured your rates to work independently.';
+                case 'Length of Stay Error':
+                    return 'We\'ve corrected the rate plan accommodations and sent an update.';
+                case 'Booking Limit Error':
+                    return 'We\'ve synchronized the unit numbers between both systems.';
+                default:
+                    return 'We\'ve implemented the necessary fixes on our end.';
+            }
+        }
+
+        function getClientActionMessage(errorName) {
+            switch (errorName) {
+                case 'Price Too High Error':
+                case 'Price Too Low Error':
+                    return 'To resolve this, please review your inventory and adjust your pricing accordingly.';
+                case 'Long-Term Rentals Only Error':
+                    return 'To resolve this, you can either adjust your minimum stay settings or complete the registration process with the OTA.';
+                case 'Declined Terms of Service':
+                    return 'Please let us know if you\'d like to accept the latest Terms of Service or disconnect this integration.';
+                default:
+                    return 'Please follow the specific steps we\'ll provide to resolve this issue.';
+            }
+        }
+
+        function getOtaFromError(error) {
+            // This is a helper function to determine OTA from error context
+            return 'OTA'; // Simplified for now, could be enhanced based on error patterns
         }
 
         function findTroubleshootingMatch(ota, error) {

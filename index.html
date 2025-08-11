@@ -459,7 +459,7 @@
         </div>
 
         <footer style="text-align: center; padding: 20px; color: rgba(255, 255, 255, 0.7); font-size: 0.85rem; background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);">
-            <p>OTA Ticket Generator v2.0 | Enhanced with Comprehensive Troubleshooting Library | Last Updated: 28 Juillet 2025</p>
+            <p>OTA Ticket Generator v3.0 | Simplified Co-pilot Integration | Last Updated: 28 Juillet 2025</p>
         </footer>
     </div>
 
@@ -622,14 +622,30 @@
             try {
                 const errorObj = JSON.parse(errorCodeString);
                 const firstKey = Object.keys(errorObj)[0];
+                const firstMessage = errorObj[firstKey];
+                
+                // For Expedia errors, extract the numeric code from the message
+                if (typeof firstMessage === 'string' && firstMessage.includes(' -> ')) {
+                    const codeMatch = firstMessage.match(/(\d{3,4})\s*->/);
+                    if (codeMatch) {
+                        return {
+                            code: codeMatch[1], // The numeric error code (3010, 3128, etc.)
+                            message: firstMessage, // Full error message
+                            roomId: firstKey // Room ID from the key
+                        };
+                    }
+                }
+                
                 return {
                     code: firstKey,
-                    message: errorObj[firstKey]
+                    message: firstMessage || errorCodeString,
+                    roomId: firstKey
                 };
             } catch (e) {
                 return {
                     code: 'Unknown',
-                    message: errorCodeString || 'No error message available'
+                    message: errorCodeString || 'No error message available',
+                    roomId: 'N/A'
                 };
             }
         }
@@ -813,67 +829,72 @@
         };
 
         function generateTicketNote(row) {
-            const error = parseErrorCode(row.error_code);
+            // Extract the first sentence from the error message
+            const errorCodeFirstSentence = getFirstSentenceFromError(row.error_code);
+            
+            // Get OTA from message column
             const ota = (row.message || 'Unknown').toLowerCase();
             
-            // Extract Room ID (the numbers) from error_code if available
-            const roomId = extractRoomId(row.error_code);
+            // Get Connection ID from payload.ota_hotel_id
+            const connectionId = row['payload.ota_hotel_id'] || 'N/A';
             
-            // Try to match error with troubleshooting library
-            const troubleshootingData = findTroubleshootingMatch(ota, error);
+            return `📋 OTA: ${ota.charAt(0).toUpperCase() + ota.slice(1)}
+
+⚠️ Error Code: ${errorCodeFirstSentence}
+
+🔗 Connection ID: ${connectionId}
+
+🛠️ Troubleshooting: Ask Co-pilot - Paste the error code and follow instructions.
+
+📊 Additional Information:
+- Hotel ID: ${row['payload.hotel_id'] || 'N/A'}
+- Account Owner ID: ${row['payload.account_owner_id'] || 'N/A'}
+- Batcave Link: ${row.batcave_link || 'N/A'}`;
+        }
+
+        function getFirstSentenceFromError(errorCodeString) {
+            if (!errorCodeString) return 'No error message available';
             
-            if (troubleshootingData) {
-                const macro = generateMacro(troubleshootingData, error);
+            try {
+                const errorObj = JSON.parse(errorCodeString);
+                const firstValue = Object.values(errorObj)[0];
                 
-                return `📋 Error Details:
-OTA: ${ota.charAt(0).toUpperCase() + ota.slice(1)}
-Error Code: ${error.message || error.code}
-Room ID: ${roomId}
-
-🛠️ Troubleshooting Steps for the Agent:
-${troubleshootingData.steps}
-
-💬 Macro:
-${macro}
-
-📊 Additional Information:
-- Hotel ID: ${row['payload.hotel_id'] || 'N/A'}
-- Account Owner ID: ${row['payload.account_owner_id'] || 'N/A'}
-- OTA Hotel ID: ${row['payload.ota_hotel_id'] || 'N/A'}
-- Batcave Link: ${row.batcave_link || 'N/A'}`;
+                if (typeof firstValue === 'string') {
+                    // Extract first sentence (up to first period, exclamation, or question mark)
+                    const firstSentence = firstValue.match(/^[^.!?]*[.!?]/);
+                    if (firstSentence) {
+                        return firstSentence[0].trim();
+                    }
+                    
+                    // If no sentence ending found, take first 150 characters
+                    return firstValue.length > 150 
+                        ? firstValue.substring(0, 150) + '...' 
+                        : firstValue;
+                }
+                
+                return firstValue || 'No error message available';
+            } catch (e) {
+                // If not JSON, extract first sentence from raw string
+                const firstSentence = errorCodeString.match(/^[^.!?]*[.!?]/);
+                if (firstSentence) {
+                    return firstSentence[0].trim();
+                }
+                
+                // Return first 150 characters if no sentence ending
+                return errorCodeString.length > 150 
+                    ? errorCodeString.substring(0, 150) + '...' 
+                    : errorCodeString;
             }
-            
-            // Fallback to generic format if no match found
-            return `📋 Error Details:
-OTA: ${ota.charAt(0).toUpperCase() + ota.slice(1)}
-Error Code: ${error.message || error.code}
-Room ID: ${roomId}
-
-🛠️ Troubleshooting Steps for the Agent:
-1. Review error details in Batcave link
-2. Check OTA documentation for specific error code
-3. Contact technical support if needed
-4. Provide client with specific guidance based on findings
-
-💬 Macro:
-Hello! We've identified an issue with your OTA connection and are currently investigating this specific error. Our technical team is working on a resolution and will provide you with detailed steps shortly. We'll keep you updated on our progress. Please don't hesitate to reach out if you have any questions. Best regards!
-
-📊 Additional Information:
-- Hotel ID: ${row['payload.hotel_id'] || 'N/A'}
-- Account Owner ID: ${row['payload.account_owner_id'] || 'N/A'}
-- OTA Hotel ID: ${row['payload.ota_hotel_id'] || 'N/A'}
-- Batcave Link: ${row.batcave_link || 'N/A'}`;
         }
 
         function extractRoomId(errorCodeString) {
             if (!errorCodeString) return 'N/A';
             
             try {
-                // Try to parse as JSON first
+                // Parse the JSON to get all room IDs
                 const errorObj = JSON.parse(errorCodeString);
-                // Look for numeric values that could be room IDs
-                const numbers = JSON.stringify(errorObj).match(/\d+/g);
-                return numbers ? numbers.join(', ') : 'N/A';
+                const roomIds = Object.keys(errorObj);
+                return roomIds.length > 0 ? roomIds.join(', ') : 'N/A';
             } catch (e) {
                 // If not JSON, extract numbers from the raw string
                 const numbers = errorCodeString.match(/\d+/g);
@@ -1019,17 +1040,41 @@ Hello! We've identified an issue with your OTA connection and are currently inve
             
             // Expedia specific patterns
             if (ota.includes('expedia')) {
+                // Check for exact numeric error codes first
+                if (library[error.code]) {
+                    return library[error.code];
+                }
+                
+                // Pattern matching for Expedia errors
                 if (errorMessage.includes('hotel id not found')) {
                     return library['hotel_not_found'];
                 }
-                if (errorMessage.includes('3103') || (errorMessage.includes('currency') && errorMessage.includes('match'))) {
-                    return library['3103'];
+                if (error.code === '3103' || (errorMessage.includes('currency') && errorMessage.includes('match'))) {
+                    return library['currency_mismatch'];
                 }
-                if (errorMessage.includes('3202') || (errorMessage.includes('access') && errorMessage.includes('denied'))) {
-                    return library['3202'];
+                if (error.code === '3202' || (errorMessage.includes('hotel id not found') && errorMessage.includes('account'))) {
+                    return library['hotel_access_denied'];
                 }
-                if (errorMessage.includes('3010') || errorMessage.includes('validation') && errorMessage.includes('schema')) {
-                    return library['3010'];
+                if (error.code === '3010' || errorMessage.includes('validation against schema failed')) {
+                    return library['validation_schema_failed'];
+                }
+                if (error.code === '3128' || (errorMessage.includes('lengthofstaymin') && errorMessage.includes('lengthofstaymax'))) {
+                    return library['invalid_length_of_stay'];
+                }
+                if (error.code === '3142' || errorMessage.includes('sell rates are expected')) {
+                    return library['sell_rates'];
+                }
+                if (error.code === '3108' || errorMessage.includes('conflicting values within the same request')) {
+                    return library['conflicting_values'];
+                }
+                if (error.code === '3210' || errorMessage.includes('exceed max number of connections')) {
+                    return library['max_connections'];
+                }
+                if (errorMessage.includes('rate_not_active')) {
+                    return library['rate_not_active'];
+                }
+                if (errorMessage.includes('service unavailable')) {
+                    return library['service_unavailable'];
                 }
             }
             
